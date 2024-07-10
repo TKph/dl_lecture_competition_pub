@@ -14,18 +14,18 @@ class BasicConvClassifier(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.blocks = nn.Sequential(
+        self.blocks = nn.Sequential(#in→hid→hid
             ConvBlock(in_channels, hid_dim),
             ConvBlock(hid_dim, hid_dim),
         )
 
-        self.head = nn.Sequential(
+        self.head = nn.Sequential(#AvgPool→hid→class
             nn.AdaptiveAvgPool1d(1),
             Rearrange("b d 1 -> b d"),
             nn.Linear(hid_dim, num_classes),
         )
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(self, X: torch.Tensor) -> torch.Tensor:#blocks→head
         """_summary_
         Args:
             X ( b, c, t ): _description_
@@ -59,7 +59,7 @@ class ConvBlock(nn.Module):
 
         self.dropout = nn.Dropout(p_drop)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(self, X: torch.Tensor) -> torch.Tensor:#2層の畳み込み
         if self.in_dim == self.out_dim:
             X = self.conv0(X) + X  # skip connection
         else:
