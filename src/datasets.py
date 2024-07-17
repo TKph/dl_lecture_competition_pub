@@ -21,7 +21,7 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         X_path = os.path.join(self.data_dir, f"{self.split}_X", str(i).zfill(5) + ".npy")
-        X = torch.from_numpy(np.load(X_path))
+        X = torch.from_numpy(np.load(X_path)) #X.shape = [c=271, t=281]
         
         subject_idx_path = os.path.join(self.data_dir, f"{self.split}_subject_idxs", str(i).zfill(5) + ".npy")
         subject_idx = torch.from_numpy(np.load(subject_idx_path))
