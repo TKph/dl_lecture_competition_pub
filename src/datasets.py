@@ -4,7 +4,10 @@ import torch
 from typing import Tuple
 from termcolor import cprint
 from glob import glob
+from scipy.signal import savgol_filter
 
+def sg_filter(X):
+    return savgol_filter(X, 14, 2)
 
 class ThingsMEGDataset(torch.utils.data.Dataset):
     def __init__(self, split: str, data_dir: str = "data") -> None:
@@ -22,6 +25,7 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
     def __getitem__(self, i):
         X_path = os.path.join(self.data_dir, f"{self.split}_X", str(i).zfill(5) + ".npy")
         X = torch.from_numpy(np.load(X_path)) #X.shape = [c=271, t=281]
+        X = np.apply_along_axis(sg_filter, 1, X) #フィルタリング
         
         subject_idx_path = os.path.join(self.data_dir, f"{self.split}_subject_idxs", str(i).zfill(5) + ".npy")
         subject_idx = torch.from_numpy(np.load(subject_idx_path))

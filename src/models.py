@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange
-
+from einops import rearrange
 
 class BasicConvClassifier(nn.Module):
     def __init__(
@@ -13,6 +13,8 @@ class BasicConvClassifier(nn.Module):
         hid_dim: int = 128
     ) -> None:
         super().__init__()
+        
+        self.subjectlayer = SubjectSpecificLayer(in_channels, in_channels)
 
         self.blocks = nn.Sequential(#in→hid→hid
             ConvBlock(in_channels, hid_dim),
@@ -25,18 +27,30 @@ class BasicConvClassifier(nn.Module):
             nn.Linear(hid_dim, num_classes),
         )
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:#blocks→head
+    def forward(self, X: torch.Tensor, subject) -> torch.Tensor:#blocks→head
         """_summary_
         Args:
             X ( b, c, t ): _description_
         Returns:
             X ( b, num_classes ): _description_
         """
+        X = rearrange(X, 'b c t -> b t c')
+        X = self.subjectlayer(X, subject)
+        X = rearrange(X, 'b t c -> b c t')
+        
         X = self.blocks(X)
 
         return self.head(X)
 
-
+class SubjectSpecificLayer(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super(SubjectSpecificLayer, self).__init__()
+        self.linears = nn.ModuleList([nn.Linear(in_dim, out_dim) for _ in range(4)])
+    
+    def forward(self, X, subject):
+        out = torch.stack([self.linears[s](X[i]) for i, s in enumerate(subject)])
+        return out
+    
 class ConvBlock(nn.Module):
     def __init__(
         self,
